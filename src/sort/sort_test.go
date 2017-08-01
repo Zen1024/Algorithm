@@ -17,23 +17,22 @@ func Init() {
 	}
 }
 
-func TestQuick(t *testing.T) {
-	Init()
-	t.Logf("before:%v", testArr[:10])
-	re := QuickSort(testArr)
-	t.Logf("after:%v", re[:10])
-	if !isSort(re) {
-		t.Fail()
-	}
+type SortFnc func(in []int) []int
+
+var allFunc map[string]SortFnc = map[string]SortFnc{
+	"QuickSort":  QuickSort,
+	"HeapSort":   HeapSort,
+	"CountSort":  CountSort,
+	"BaseSort":   BaseSort,
+	"BucketSort": BucketSort,
 }
 
-func TestHeap(t *testing.T) {
-	Init()
-	t.Logf("before:%v", testArr[:10])
-	re := HeapSort(testArr)
-	t.Logf("after:%v", re[:10])
-
-	if !isSort(re) {
-		t.Fail()
+func TestAll(t *testing.T) {
+	for name, fnc := range allFunc {
+		Init()
+		re := fnc(testArr)
+		if !isSort(re) {
+			t.Fatalf("func:%s failed!", name)
+		}
 	}
 }
