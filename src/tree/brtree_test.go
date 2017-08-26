@@ -123,6 +123,7 @@ func timetooks(begin int64) string {
 
 func TestDelete(t *testing.T) {
 	arr := randArr(10, 100)
+	//arr = []int{65, 47, 5, 31, 26, 97, 56, 37, 40, 39}
 	la := len(arr)
 	tree := &BrNode{
 		Elem:   arr[0],
@@ -136,6 +137,9 @@ func TestDelete(t *testing.T) {
 	}
 	t.Logf("%v", arr)
 	tree.Print()
-	tree.Delete(arr[0])
+	tree = tree.Delete(arr[0])
 	tree.Print()
+	if !tree.Valid() {
+		t.Fatalf("invalid br-tree!")
+	}
 }

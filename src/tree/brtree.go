@@ -148,7 +148,7 @@ func (t *BrNode) elem() int {
 }
 func (t *BrNode) print(name string) {
 	p, l, r, e, c := t.plrec()
-	fmt.Printf("[%s-%d][%p] p[%d:%p],l:[%d:%p],r:[%d:%p],c[%s]\n", name, e, t, p.elem(), p, l.elem(), l, r.elem(), r, c.color())
+	fmt.Printf("[%s:%d][%p] p[%d:%p],l:[%d:%p],r:[%d:%p],c[%s]\n", name, e, t, p.elem(), p, l.elem(), l, r.elem(), r, c.color())
 }
 
 func (c Color) color() string {
@@ -443,12 +443,13 @@ func (t *BrNode) Insert(elem int) *BrNode {
 	return re
 }
 
-func (t *BrNode) delNodeWith01Child(todel *BrNode) *BrNode {
+//删除非双孩子的节点，返回节点孩子
+func (t *BrNode) delNodeWith01Child(todel *BrNode) (parent, tofix *BrNode) {
 	if todel == nil {
-		return t
+		return nil, nil
 	}
 	if todel.Parent == nil {
-		return nil
+		return nil, nil
 	}
 	if todel.Left == nil && todel.Right == nil {
 		if todel.Parent.Left == todel {
@@ -456,44 +457,186 @@ func (t *BrNode) delNodeWith01Child(todel *BrNode) *BrNode {
 		} else {
 			todel.Parent.Right = nil
 		}
+		p := todel.Parent
 		todel.Parent = nil
-		return t
+		return p, nil
 	}
-	var new *BrNode
+	var newNode *BrNode
 	if todel.Left != nil {
-		new = todel.Left
+		newNode = todel.Left
 		todel.Left = nil
 	} else {
-		new = todel.Right
+		newNode = todel.Right
 		todel.Right = nil
 	}
-	new.Parent = todel.Parent
+	newNode.Parent = todel.Parent
 	if todel.Parent.Left == todel {
-		todel.Parent.Left = new
+		todel.Parent.Left = newNode
 	} else {
-		todel.Parent.Right = new
+		todel.Parent.Right = newNode
 	}
+	p := todel.Parent
 	todel.Parent = nil
-	return t
+
+	if todel.Left != nil {
+		return p, todel.Left
+	}
+	return p, todel.Right
 }
 
-func (t *BrNode) delete_fix(elem *BrNode) *BrNode { return t }
+func (t *BrNode) root() *BrNode {
+	p := t
+	for p.Parent != nil {
+		p = p.Parent
+	}
+	return p
+}
+
+func (t *BrNode) delete_fix(tofix, p_tofix *BrNode) *BrNode {
+	//被删除的节点为黑色，可推断出其兄弟节点必定不为空，否则违反性质根节点到任意叶子黑高度相同
+	for tofix != t && (tofix == nil || tofix.Color == ColorBlack) {
+		bro := p_tofix.Left
+		if tofix == p_tofix.Left {
+			bro = p_tofix.Right
+		}
+		fmt.Printf("begin:-----------------------\n")
+		tofix.print("tofix")
+		p_tofix.print("p_tofix")
+		bro.print("bro")
+		fmt.Printf("end:-------------------------\n\n")
+
+		if tofix == p_tofix.Left {
+
+			//cond -1 convert to other cond
+			if bro.Color == ColorRed {
+				p_tofix.LeftRotate()
+				bro.Color = ColorBlack
+				p_tofix.Color = ColorRed
+				fmt.Printf("cond-1:begin:-----------------------\n")
+				t.root().Print()
+				fmt.Printf("end:--------------------------------\n\n")
+				continue
+			}
+
+			if bro.Color == ColorBlack {
+				//cond -2 bro 含有两个黑孩
+				if !((bro.Left != nil && bro.Left.Color == ColorRed) || (bro.Right != nil) && (bro.Right.Color == ColorRed)) {
+					bro.Color = ColorRed
+					tofix = p_tofix
+					p_tofix = p_tofix.Parent
+					fmt.Printf("cond-2:begin:-----------------------\n")
+					t.root().Print()
+					fmt.Printf("end:--------------------------------\n\n")
+					continue
+				}
+				//cond -3 bro-left-red,bro-right-black
+				if bro.Left != nil && bro.Left.Color == ColorRed && (bro.Right == nil || bro.Right.Color == ColorBlack) {
+					bro.RightRotate()
+					bro.Color = ColorRed
+					bro.Parent.Color = ColorBlack
+					fmt.Printf("cond-3:begin:-----------------------\n")
+					t.root().Print()
+					fmt.Printf("end:--------------------------------\n\n")
+					continue
+				}
+
+				if bro.Right != nil && bro.Right.Color == ColorRed {
+					p_tofix.LeftRotate()
+					p_tofix.Color = ColorBlack
+					bro.Color = ColorRed
+					bro.Right.Color = ColorBlack
+					tofix = t
+					p_tofix = nil
+					fmt.Printf("cond-4:begin:-----------------------\n")
+					t.root().Print()
+					fmt.Printf("end:--------------------------------\n\n")
+					continue
+				}
+
+			}
+		} else {
+			if bro.Color == ColorRed {
+				p_tofix.RightRotate()
+				bro.Color = ColorBlack
+				p_tofix.Color = ColorRed
+				fmt.Printf("cond-1.2:begin:-----------------------\n")
+				t.root().Print()
+				fmt.Printf("end:--------------------------------\n\n")
+				continue
+			}
+
+			if bro.Color == ColorBlack {
+				//cond -2 bro 含有两个黑孩
+				if !((bro.Left != nil && bro.Left.Color == ColorRed) || (bro.Right != nil) && (bro.Right.Color == ColorRed)) {
+					bro.Color = ColorRed
+					tofix = p_tofix
+					p_tofix = p_tofix.Parent
+					fmt.Printf("cond-2.2:begin:-----------------------\n")
+					t.root().Print()
+					fmt.Printf("end:--------------------------------\n\n")
+					continue
+				}
+				//cond -3 bro-left-red,bro-right-black
+				if bro.Left != nil && bro.Left.Color == ColorBlack && (bro.Right == nil || bro.Right.Color == ColorRed) {
+					bro.LeftRotate()
+					bro.Color = ColorRed
+					bro.Parent.Color = ColorBlack
+					fmt.Printf("cond-3.2:begin:-----------------------\n")
+					t.root().Print()
+					fmt.Printf("end:--------------------------------\n\n")
+					continue
+				}
+
+				if bro.Left != nil && bro.Left.Color == ColorRed {
+					p_tofix.RightRotate()
+					p_tofix.Color = ColorBlack
+					bro.Color = ColorRed
+					bro.Right.Color = ColorBlack
+					tofix = t
+					fmt.Printf("cond-4.2:begin:-----------------------\n")
+					t.root().Print()
+					fmt.Printf("end:--------------------------------\n\n")
+					continue
+				}
+
+			}
+		}
+	}
+	if tofix != nil {
+		tofix.Color = ColorBlack
+	}
+
+	return t
+}
 func (t *BrNode) Delete(elem int) *BrNode {
 	todel := t.find(elem)
 	if todel == nil {
 		return t
 	}
-
-	if !(todel.Left != nil && todel.Right != nil) {
-		t.delNodeWith01Child(todel)
+	var p_tofix, tofix *BrNode
+	delColor := todel.Color
+	if !(todel.Left != nil || todel.Right != nil) {
+		p_tofix, tofix = t.delNodeWith01Child(todel)
 	} else {
-
-		x := t
+		//@Todo fix color issue
+		x := todel
 		suc := x.successor()
-
+		suc.print("suc")
 		x.Elem = suc.Elem
-		t.delNodeWith01Child(suc)
+		if x.Color == ColorRed {
+			x.Color = suc.Color
+		}
+		p_tofix, tofix = t.delNodeWith01Child(suc)
+		if suc.Color == ColorRed {
+			return t
+		}
 	}
+
+	if !(delColor == ColorBlack) {
+		return t
+	}
+	t.Print()
+	t = t.delete_fix(tofix, p_tofix)
 
 	return t
 }
