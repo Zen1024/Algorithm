@@ -623,9 +623,6 @@ func (t *BrNode) Delete(elem int) *BrNode {
 		suc := x.successor()
 		suc.print("suc")
 		x.Elem = suc.Elem
-		if x.Color == ColorRed {
-			x.Color = suc.Color
-		}
 		p_tofix, tofix = t.delNodeWith01Child(suc)
 		if suc.Color == ColorRed {
 			return t

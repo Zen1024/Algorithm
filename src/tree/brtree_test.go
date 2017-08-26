@@ -123,7 +123,7 @@ func timetooks(begin int64) string {
 
 func TestDelete(t *testing.T) {
 	arr := randArr(10, 100)
-	//arr = []int{65, 47, 5, 31, 26, 97, 56, 37, 40, 39}
+	arr = []int{35, 3, 88, 60, 16, 88, 17, 23, 73, 65}
 	la := len(arr)
 	tree := &BrNode{
 		Elem:   arr[0],
