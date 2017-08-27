@@ -77,6 +77,55 @@ func (t *BrNode) RightRotate() {
 	x.Right = y
 }
 
+//中序遍历,线索化遍历
+func (t *BrNode) InOrder() []*BrNode {
+	if t == nil {
+		return nil
+	}
+	re := []*BrNode{}
+	p := t
+	for p != nil {
+		if p.Left == nil {
+			re = append(re, p)
+			p = p.Right
+		} else {
+			pre := p.Left
+			for pre.Right != nil && pre.Right != p {
+				pre = pre.Right
+			}
+			if pre.Right == nil {
+				pre.Right = p
+				p = p.Left
+			} else {
+				re = append(re, p)
+				p = p.Right
+				pre.Right = nil
+
+			}
+		}
+	}
+	return re
+}
+
+func (t *BrNode) copy() *BrNode {
+	if t == nil {
+		return nil
+	}
+	return &BrNode{
+		Parent: nil,
+		Left:   nil,
+		Right:  nil,
+		Elem:   t.Elem,
+		Color:  t.Color,
+	}
+}
+
+//@TODO
+func (t *BrNode) Copy() *BrNode {
+	return nil
+
+}
+
 func (t *BrNode) print_level(level int) {
 	if t == nil {
 		return
@@ -107,9 +156,9 @@ func (t *BrNode) print_level(level int) {
 }
 
 func (t *BrNode) Print() {
-	fmt.Printf("print b-r tree:\n")
+	fmt.Printf("\nprint b-r tree:\n")
 	t.print_level(0)
-	fmt.Printf("print end..\n")
+	fmt.Printf("print end..\n\n")
 }
 
 func (t *BrNode) get(elem int) *BrNode {
@@ -158,24 +207,6 @@ func (c Color) color() string {
 	return "r"
 }
 
-func (t *BrNode) Valid() bool {
-	leaves := t.leaves()
-	ll := len(leaves)
-	if ll == 0 {
-		return false
-	}
-	cnt := t.pathBlackCnt(leaves[0])
-
-	for i := 0; i < ll; i++ {
-		c := t.pathBlackCnt(leaves[i])
-		if c != cnt {
-			return false
-		}
-	}
-	return true
-
-}
-
 //get leaves
 func (t *BrNode) leaves() []*BrNode {
 	var p *BrNode = t
@@ -204,6 +235,29 @@ func (t *BrNode) leaves() []*BrNode {
 		}
 	}
 	return re
+}
+
+func (t *BrNode) Valid() bool {
+	inseq := t.InOrder()
+	li := len(inseq)
+	for i := 0; i < li; i++ {
+		leaves := t.leaves()
+		ll := len(leaves)
+		if ll == 0 {
+			return false
+		}
+		p := inseq[i]
+		cnt := p.pathBlackCnt(leaves[0])
+		for j := 0; j < ll; j++ {
+			c := p.pathBlackCnt(leaves[j])
+			if c != cnt {
+				return false
+			}
+		}
+	}
+
+	return true
+
 }
 
 func (t *BrNode) pathBlackCnt(leaf *BrNode) int {
@@ -320,6 +374,7 @@ func (t *BrNode) find(elem int) *BrNode {
 	}
 	return nil
 }
+
 func (t *BrNode) insert_fix(elem *BrNode) *BrNode {
 	if elem == nil {
 		return t
@@ -478,10 +533,7 @@ func (t *BrNode) delNodeWith01Child(todel *BrNode) (parent, tofix *BrNode) {
 	p := todel.Parent
 	todel.Parent = nil
 
-	if todel.Left != nil {
-		return p, todel.Left
-	}
-	return p, todel.Right
+	return p, newNode
 }
 
 func (t *BrNode) root() *BrNode {
@@ -499,22 +551,22 @@ func (t *BrNode) delete_fix(tofix, p_tofix *BrNode) *BrNode {
 		if tofix == p_tofix.Left {
 			bro = p_tofix.Right
 		}
-		fmt.Printf("begin:-----------------------\n")
-		tofix.print("tofix")
-		p_tofix.print("p_tofix")
-		bro.print("bro")
-		fmt.Printf("end:-------------------------\n\n")
+		// fmt.Printf("begin:-----------------------\n")
+		// tofix.print("tofix")
+		// p_tofix.print("p_tofix")
+		// bro.print("bro")
+		// fmt.Printf("end:-------------------------\n\n")
 
 		if tofix == p_tofix.Left {
 
 			//cond -1 convert to other cond
 			if bro.Color == ColorRed {
-				p_tofix.LeftRotate()
 				bro.Color = ColorBlack
 				p_tofix.Color = ColorRed
-				fmt.Printf("cond-1:begin:-----------------------\n")
-				t.root().Print()
-				fmt.Printf("end:--------------------------------\n\n")
+				p_tofix.LeftRotate()
+				// fmt.Printf("cond-1:begin:-----------------------\n")
+				// t.root().Print()
+				// fmt.Printf("end:--------------------------------\n\n")
 				continue
 			}
 
@@ -524,44 +576,45 @@ func (t *BrNode) delete_fix(tofix, p_tofix *BrNode) *BrNode {
 					bro.Color = ColorRed
 					tofix = p_tofix
 					p_tofix = p_tofix.Parent
-					fmt.Printf("cond-2:begin:-----------------------\n")
-					t.root().Print()
-					fmt.Printf("end:--------------------------------\n\n")
+					// fmt.Printf("cond-2:begin:-----------------------\n")
+					// t.root().Print()
+					// fmt.Printf("end:--------------------------------\n\n")
 					continue
 				}
 				//cond -3 bro-left-red,bro-right-black
 				if bro.Left != nil && bro.Left.Color == ColorRed && (bro.Right == nil || bro.Right.Color == ColorBlack) {
-					bro.RightRotate()
+					bro.Left.Color = ColorBlack
 					bro.Color = ColorRed
-					bro.Parent.Color = ColorBlack
-					fmt.Printf("cond-3:begin:-----------------------\n")
-					t.root().Print()
-					fmt.Printf("end:--------------------------------\n\n")
+					bro.RightRotate()
+					// fmt.Printf("cond-3:begin:-----------------------\n")
+					// t.root().Print()
+					// fmt.Printf("end:--------------------------------\n\n")
 					continue
 				}
 
 				if bro.Right != nil && bro.Right.Color == ColorRed {
 					p_tofix.LeftRotate()
+
+					bro.Color = p_tofix.Color
 					p_tofix.Color = ColorBlack
-					bro.Color = ColorRed
 					bro.Right.Color = ColorBlack
 					tofix = t
 					p_tofix = nil
-					fmt.Printf("cond-4:begin:-----------------------\n")
-					t.root().Print()
-					fmt.Printf("end:--------------------------------\n\n")
+					// fmt.Printf("cond-4:begin:-----------------------\n")
+					// t.root().Print()
+					// fmt.Printf("end:--------------------------------\n\n")
 					continue
 				}
 
 			}
 		} else {
 			if bro.Color == ColorRed {
-				p_tofix.RightRotate()
 				bro.Color = ColorBlack
 				p_tofix.Color = ColorRed
-				fmt.Printf("cond-1.2:begin:-----------------------\n")
-				t.root().Print()
-				fmt.Printf("end:--------------------------------\n\n")
+				p_tofix.RightRotate()
+				// fmt.Printf("cond-1.2:begin:-----------------------\n")
+				// t.root().Print()
+				// fmt.Printf("end:--------------------------------\n\n")
 				continue
 			}
 
@@ -571,31 +624,32 @@ func (t *BrNode) delete_fix(tofix, p_tofix *BrNode) *BrNode {
 					bro.Color = ColorRed
 					tofix = p_tofix
 					p_tofix = p_tofix.Parent
-					fmt.Printf("cond-2.2:begin:-----------------------\n")
-					t.root().Print()
-					fmt.Printf("end:--------------------------------\n\n")
+					// fmt.Printf("cond-2.2:begin:-----------------------\n")
+					// t.root().Print()
+					// fmt.Printf("end:--------------------------------\n\n")
 					continue
 				}
 				//cond -3 bro-left-red,bro-right-black
 				if bro.Left != nil && bro.Left.Color == ColorBlack && (bro.Right == nil || bro.Right.Color == ColorRed) {
-					bro.LeftRotate()
+					bro.Right.Color = ColorBlack
 					bro.Color = ColorRed
-					bro.Parent.Color = ColorBlack
-					fmt.Printf("cond-3.2:begin:-----------------------\n")
-					t.root().Print()
-					fmt.Printf("end:--------------------------------\n\n")
+					bro.LeftRotate()
+					// fmt.Printf("cond-3.2:begin:-----------------------\n")
+					// t.root().Print()
+					// fmt.Printf("end:--------------------------------\n\n")
 					continue
 				}
 
 				if bro.Left != nil && bro.Left.Color == ColorRed {
 					p_tofix.RightRotate()
+					bro.Color = p_tofix.Color
 					p_tofix.Color = ColorBlack
-					bro.Color = ColorRed
-					bro.Right.Color = ColorBlack
+					bro.Left.Color = ColorBlack
 					tofix = t
-					fmt.Printf("cond-4.2:begin:-----------------------\n")
-					t.root().Print()
-					fmt.Printf("end:--------------------------------\n\n")
+					p_tofix = nil
+					// fmt.Printf("cond-4.2:begin:-----------------------\n")
+					// t.root().Print()
+					// fmt.Printf("end:--------------------------------\n\n")
 					continue
 				}
 
@@ -615,24 +669,38 @@ func (t *BrNode) Delete(elem int) *BrNode {
 	}
 	var p_tofix, tofix *BrNode
 	delColor := todel.Color
-	if !(todel.Left != nil || todel.Right != nil) {
+	if !(todel.Left != nil && todel.Right != nil) {
 		p_tofix, tofix = t.delNodeWith01Child(todel)
 	} else {
 		//@Todo fix color issue
 		x := todel
 		suc := x.successor()
-		suc.print("suc")
+		// suc.print("suc")
 		x.Elem = suc.Elem
 		p_tofix, tofix = t.delNodeWith01Child(suc)
+		if tofix == nil {
+			return t
+		}
+		// fmt.Printf("origin:--------------\n")
+		// t.Print()
+		// fmt.Printf("---------------------\n")
 		if suc.Color == ColorRed {
+			return t
+		} else {
+			t = t.delete_fix(tofix, p_tofix)
 			return t
 		}
 	}
 
-	if !(delColor == ColorBlack) {
+	if delColor == ColorRed {
 		return t
 	}
-	t.Print()
+	if tofix == nil {
+		return t
+	}
+	// fmt.Printf("origin:--------------\n")
+	// t.Print()
+	// fmt.Printf("---------------------\n")
 	t = t.delete_fix(tofix, p_tofix)
 
 	return t

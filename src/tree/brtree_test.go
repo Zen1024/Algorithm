@@ -92,11 +92,10 @@ func timetooks(begin int64) string {
 // }
 
 // func TestInsert(t *testing.T) {
-// 	suit := []int{10, 100, 1000, 10000, 100000, 1000000, 10000000}
 // 	max := 10000
-// 	ls := len(suit)
-// 	for i := 0; i < ls; i++ {
-// 		arr := randArr(suit[i], max)
+// 	inValidCnt := 0
+// 	for i := 0; i < 1000; i++ {
+// 		arr := randArr(1000, max)
 // 		var tree *BrNode = &BrNode{
 // 			Parent: nil,
 // 			Left:   nil,
@@ -104,26 +103,20 @@ func timetooks(begin int64) string {
 // 			Elem:   arr[0],
 // 			Color:  ColorBlack,
 // 		}
-// 		// t.Logf("%v\n", arr)
 // 		la := len(arr)
-// 		now := time.Now().UnixNano()
 // 		for i := 1; i < la; i++ {
 // 			tree = tree.Insert(arr[i])
 // 		}
-// 		tooks := timetooks(now)
-// 		t.Logf("[%d] elements,took:%s", suit[i], tooks)
-
 // 		if !tree.Valid() {
-// 			t.Fatalf("invalid br-tree!")
-// 			tree.Print()
+// 			inValidCnt++
 // 		}
-// 	}
 
+// 	}
+// 	t.Logf("[insert]invalid cnt:%d\n", inValidCnt)
 // }
 
 func TestDelete(t *testing.T) {
-	arr := randArr(10, 100)
-	arr = []int{35, 3, 88, 60, 16, 88, 17, 23, 73, 65}
+	arr := randArr(10, 10000)
 	la := len(arr)
 	tree := &BrNode{
 		Elem:   arr[0],
@@ -135,11 +128,17 @@ func TestDelete(t *testing.T) {
 	for i := 1; i < la; i++ {
 		tree = tree.Insert(arr[i])
 	}
-	t.Logf("%v", arr)
 	tree.Print()
-	tree = tree.Delete(arr[0])
-	tree.Print()
-	if !tree.Valid() {
-		t.Fatalf("invalid br-tree!")
+	cp := tree.Copy()
+	cp.Print()
+	invalidCnt := 0
+
+	for i := 0; i < la; i++ {
+		tree = tree.Delete(arr[i])
+		if !tree.Valid() {
+			invalidCnt++
+			// tree.Print()
+		}
 	}
+	t.Logf("[delete]invalid cnt:%d\n", invalidCnt)
 }
