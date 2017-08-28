@@ -91,33 +91,42 @@ func timetooks(begin int64) string {
 // 	root.Print()
 // }
 
-// func TestInsert(t *testing.T) {
-// 	max := 10000
-// 	inValidCnt := 0
-// 	for i := 0; i < 1000; i++ {
-// 		arr := randArr(1000, max)
-// 		var tree *BrNode = &BrNode{
-// 			Parent: nil,
-// 			Left:   nil,
-// 			Right:  nil,
-// 			Elem:   arr[0],
-// 			Color:  ColorBlack,
-// 		}
-// 		la := len(arr)
-// 		for i := 1; i < la; i++ {
-// 			tree = tree.Insert(arr[i])
-// 		}
-// 		if !tree.Valid() {
-// 			inValidCnt++
-// 		}
+func TestInsert(t *testing.T) {
+	max := 10000
+	inValidCnt := 0
+	for i := 0; i < 1000; i++ {
+		arr := randArr(10, max)
+		// t.Logf("%v", arr)
+		//arr = []int{68, 800, 656, 686, 814, 304, 926, 152, 793, 181}
+		var tree *BrNode = &BrNode{
+			Parent: nil,
+			Left:   nil,
+			Right:  nil,
+			Elem:   arr[0],
+			Color:  ColorBlack,
+		}
+		la := len(arr)
+		for i := 1; i < la; i++ {
+			// orig := tree.Copy()
+			tree = tree.Insert(arr[i])
+			if !tree.Valid() {
+				// orig.Print("orig")
+				// tree.Print("orig")
+				inValidCnt++
+				return
+			}
+		}
+		// tree.Print()
 
-// 	}
-// 	t.Logf("[insert]invalid cnt:%d\n", inValidCnt)
-// }
+	}
+	t.Logf("[insert]invalid cnt:%d\n", inValidCnt)
+}
 
 func TestDelete(t *testing.T) {
-	arr := randArr(10, 10000)
+	arr := randArr(10, 1000)
 	la := len(arr)
+
+	//arr = []int{900, 115, 566, 285, 154, 620, 907, 574, 775, 807}
 	tree := &BrNode{
 		Elem:   arr[0],
 		Color:  ColorBlack,
@@ -125,20 +134,29 @@ func TestDelete(t *testing.T) {
 		Right:  nil,
 		Parent: nil,
 	}
+	s := ""
+	for i := 0; i < la; i++ {
+		s += fmt.Sprintf("%d,", arr[i])
+	}
+	t.Logf("%s\n", s)
 	for i := 1; i < la; i++ {
 		tree = tree.Insert(arr[i])
-	}
-	tree.Print()
-	cp := tree.Copy()
-	cp.Print()
-	invalidCnt := 0
-
-	for i := 0; i < la; i++ {
-		tree = tree.Delete(arr[i])
 		if !tree.Valid() {
-			invalidCnt++
-			// tree.Print()
+			return
 		}
 	}
-	t.Logf("[delete]invalid cnt:%d\n", invalidCnt)
+	// invalidCnt := 0
+	tree.Print()
+	if !tree.Valid() {
+		t.Fatalf("invalid tree!")
+	}
+	for i := 0; i < la; i++ {
+		origin := tree.Copy()
+		tree = tree.Delete(arr[i], s)
+		if !tree.Valid() {
+			origin.Print(fmt.Sprintf("origin-%d", arr[i]))
+			tree.Print("now")
+			return
+		}
+	}
 }
