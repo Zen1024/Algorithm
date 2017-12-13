@@ -1,1 +1,1 @@
-#仅练习用
+#learing algorithm
